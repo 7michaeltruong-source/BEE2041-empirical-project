@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chess Win Probability Calculator</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #fafaf8; color: #1a1a1a; padding: 2rem; }
+  h2 { font-size: 18px; font-weight: 500; margin-bottom: 0.5rem; }
+  p.subtitle { font-size: 13px; color: #666; margin-bottom: 1.5rem; }
+  .slider-row { display: flex; align-items: center; gap: 12px; margin-bottom: 1.5rem; }
+  .slider-label { font-size: 14px; color: #666; width: 130px; flex-shrink: 0; }
+  .slider-row input[type=range] { flex: 1; accent-color: #1a1a1a; }
+  .slider-val { font-size: 14px; font-weight: 500; min-width: 48px; text-align: right; }
+  .cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 1.5rem; }
+  .card { background: #f0ede8; border-radius: 8px; padding: 1rem; }
+  .card-label { font-size: 12px; color: #888; margin-bottom: 6px; }
+  .card-val { font-size: 22px; font-weight: 500; }
+  .card-val.win { color: #2d7a2d; }
+  .card-val.loss { color: #a32d2d; }
+  .bar-wrap { margin-bottom: 1.5rem; }
+  .bar-label { display: flex; justify-content: space-between; font-size: 12px; color: #888; margin-bottom: 6px; }
+  .bar-track { height: 12px; background: #e8e4de; border-radius: 6px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 6px; transition: width 0.3s ease; background: #2d7a2d; }
+  .verdict { font-size: 14px; color: #555; border-top: 1px solid #e8e4de; padding-top: 1rem; line-height: 1.6; }
+  .verdict strong { color: #1a1a1a; font-weight: 500; }
+  .note { font-size: 11px; color: #aaa; margin-top: 1rem; }
+</style>
+</head>
+<body>
+
+<h2>Chess Win Probability Calculator</h2>
+<p class="subtitle">Based on logistic regression fitted on 16,155 Lichess games. Coefficient: 0.0043 per rating point.</p>
+
+<div class="slider-row">
+  <span class="slider-label">Rating difference</span>
+  <input type="range" min="-600" max="600" value="0" step="1" id="diff-slider" />
+  <span class="slider-val" id="diff-out">0</span>
+</div>
+
+<div class="cards">
+  <div class="card">
+    <div class="card-label">Win probability</div>
+    <div class="card-val win" id="win-pct">49.4%</div>
+  </div>
+  <div class="card">
+    <div class="card-label">Loss probability</div>
+    <div class="card-val loss" id="loss-pct">50.6%</div>
+  </div>
+</div>
+
+<div class="bar-wrap">
+  <div class="bar-label">
+    <span id="win-label">Win 49.4%</span>
+    <span id="loss-label">Loss 50.6%</span>
+  </div>
+  <div class="bar-track">
+    <div class="bar-fill" id="bar" style="width: 49.4%;"></div>
+  </div>
+</div>
+
+<div class="verdict" id="verdict">
+  At equal ratings, both players have roughly equal chances. The model predicts a <strong>49.4%</strong> win probability.
+</div>
+
+<p class="note">Model: Logistic regression on Lichess population data. const = -0.0252, coef = 0.0043. Draws excluded (binary win/loss classification).</p>
+
+<script>
+var coef = 0.0043;
+var cons = -0.0252;
+
+function predict(diff) {
+  return 1 / (1 + Math.exp(-(cons + coef * diff)));
+}
+
+function getVerdict(diff, winP) {
+  var winPct = (winP * 100).toFixed(1);
+  var lossPct = ((1 - winP) * 100).toFixed(1);
+  if (diff === 0) {
+    return 'At equal ratings, both players have roughly equal chances. The model predicts a <strong>' + winPct + '%</strong> win probability.';
+  }
+  var absDiff = Math.abs(diff);
+  var adv = diff > 0 ? 'advantage' : 'disadvantage';
+  var strength = '';
+  if (absDiff < 100) strength = 'modest';
+  else if (absDiff < 300) strength = 'meaningful';
+  else if (absDiff < 500) strength = 'significant';
+  else strength = 'large';
+  return 'A <strong>' + absDiff + '-point</strong> rating ' + adv + ' corresponds to a <strong>' + winPct + '%</strong> win probability - a ' + strength + ' edge. The lower-rated player still wins <strong>' + lossPct + '%</strong> of the time.';
+}
+
+function update() {
+  var diff = parseInt(document.getElementById('diff-slider').value);
+  var winP = predict(diff);
+  var winPct = (winP * 100).toFixed(1);
+  var lossPct = ((1 - winP) * 100).toFixed(1);
+
+  document.getElementById('diff-out').textContent = (diff >= 0 ? '+' : '') + diff;
+  document.getElementById('win-pct').textContent = winPct + '%';
+  document.getElementById('loss-pct').textContent = lossPct + '%';
+  document.getElementById('bar').style.width = winPct + '%';
+  document.getElementById('win-label').textContent = 'Win ' + winPct + '%';
+  document.getElementById('loss-label').textContent = 'Loss ' + lossPct + '%';
+  document.getElementById('verdict').innerHTML = getVerdict(diff, winP);
+}
+
+document.getElementById('diff-slider').addEventListener('input', update);
+update();
+</script>
+
+</body>
+</html>
