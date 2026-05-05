@@ -3,7 +3,7 @@
 ## Overview
 This project analyses how rating differences affect chess game outcomes using two datasets: a personal Chess.com game archive (scraped via API) and a Lichess population dataset. The analysis uses correlation, logistic regression, and ROC curve analysis to quantify the relationship between rating differences and win probability.
 
-**Blog post:** [link to your HackMD/published blog here]
+**Blog post:** https://github.com/7michaeltruong-source/BEE2041-empirical-project/blob/main/blog.ipynb
 
 ## Data Sources
 - **Personal Chess.com data:** Scraped automatically from the Chess.com public API (username: op_michael)
